@@ -25,14 +25,7 @@ exp
 
 ################### Toothgrowth Analysis ##############
 
-  cToothGrowth<-ToothGrowth%>%group_by(supp, dose)%>%summarise(len.mean=mean(len), count = n())
-
-  cToothGrowth$len.mean
-# Overlaid histograms with means
-ggplot(ToothGrowth, aes(x=len, fill=supp)) +
-  geom_histogram(binwidth=, alpha=.5, position="identity") +
-  geom_vline(data=cToothGrowth, aes(xintercept=len.mean),
-             linetype="dashed", size=1) + facet_wrap(~supp)
+  cToothGrowth<-ToothGrowth%>%group_by(supp, dose)%>%summarise(len.mean=mean(len),count = n(),len.sd=sd(len), len.95=1.96*len.sd)
 
 # Density plots with means
 ggplot(ToothGrowth, aes(x=len, fill=supp)) +
@@ -41,5 +34,21 @@ ggplot(ToothGrowth, aes(x=len, fill=supp)) +
              linetype="dashed", size=1) + facet_grid(dose~supp) +
   geom_text(data=cToothGrowth, aes(x=40,  0.2, label=len.mean), size=3, parse=T) 
 
+ggplot(ToothGrowth, aes(x=len, fill=supp)) +
+  geom_density() +
+  geom_vline(data=cToothGrowth, aes(xintercept=len.mean),
+             linetype="solid", size=1, colour="orange") +
+  geom_vline(data=cToothGrowth, aes(xintercept=len.mean+len.95),
+             linetype="dashed", size=1, colour="red") +
+  geom_vline(data=cToothGrowth, aes(xintercept=len.mean-len.95),
+             linetype="dashed", size=1, colour="green") +
+  facet_grid(supp~dose)
 
-ToothGrowth$
+t.test(x=ToothGrowth$len[ToothGrowth$dose==0.5 & ToothGrowth$supp=="OJ"],
+       y=ToothGrowth$len[ToothGrowth$dose==0.5 & ToothGrowth$supp=="VC"])
+       
+t.test(x=ToothGrowth$len[ToothGrowth$dose==1 & ToothGrowth$supp=="OJ"],
+       y=ToothGrowth$len[ToothGrowth$dose==1 & ToothGrowth$supp=="VC"])
+
+t.test(x=ToothGrowth$len[ToothGrowth$dose==2 & ToothGrowth$supp=="OJ"],
+       y=ToothGrowth$len[ToothGrowth$dose==2 & ToothGrowth$supp=="VC"])

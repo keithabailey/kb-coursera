@@ -1,0 +1,85 @@
+---
+title: "Coursera Statistics Inference Assignment"
+author: "Keith Bailey"
+date: "February 4, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,out.height='500px', out.width='500px', dpi=200)
+require(knitr)
+require(dplyr)
+require(ggplot2)
+```
+
+## Part2
+
+In this section of the report we will be looking at tooth growth associated to two supplements, OJ & VC, at differing dosing levels, 0.5, 1 & 2.
+
+Lets look at the data:
+
+```{r toothgrowth}
+head(ToothGrowth)
+
+table(ToothGrowth[2:3])
+```
+  
+From this we can see there are 10 samples for each dose-supplement combination.
+
+In order to investigate this I have first established the mean and standard deviation so we can establish the 95% confidence intervals of each combination of supplement and dose.
+
+```{r toothgrowth1}
+
+cToothGrowth<-ToothGrowth%>%
+              group_by(supp, dose)%>%
+              summarise(len.mean=mean(len),
+                        count = n(),
+                        len.sd=sd(len),
+                        len.95=1.96*len.sd)
+
+kable(cToothGrowth)
+```
+  
+We can see that for the lower doses there is clear separation between the growth achieved using different supplements. However, this would be much easier to see with a chart.
+
+Below, we have a density plot for each combination, overlaid with the mean (orange), 2.5th percentile (green) and 97.5th percentile (red), to show the 95% confidence interval, so we can see what, overlap there are between these combinations.
+
+```{r toothgrowth2}
+
+ggplot(ToothGrowth, aes(x=len, fill=supp)) +
+  geom_density() +
+  geom_vline(data=cToothGrowth, aes(xintercept=len.mean),
+             linetype="solid", size=1, colour="orange") +
+  geom_vline(data=cToothGrowth, aes(xintercept=len.mean+len.95),
+             linetype="dashed", size=1, colour="red") +
+  geom_vline(data=cToothGrowth, aes(xintercept=len.mean-len.95),
+             linetype="dashed", size=1, colour="green") +
+  facet_grid(supp~dose)
+
+```
+  
+Next, we would like to perform a t-test to conduct an unpaired test of each set of dose observations to assess the null hypothesis that there is no difference in the means between each set. From the chart above, we suspect that doses 0.5 and 1 will have low p-values such that we reject the null hypothesis, whereas does 2 looks likely that it will have a high p-value and so we will reject the alternative hypothesis. However it would be foolhardy to rely on such visual analysis alone.
+
+Using the t-test function in R, we will asses each of these.
+```{r t-test}
+
+t.test(x=ToothGrowth$len[ToothGrowth$dose==0.5 & ToothGrowth$supp=="OJ"],
+       y=ToothGrowth$len[ToothGrowth$dose==0.5 & ToothGrowth$supp=="VC"])
+       
+t.test(x=ToothGrowth$len[ToothGrowth$dose==1 & ToothGrowth$supp=="OJ"],
+       y=ToothGrowth$len[ToothGrowth$dose==1 & ToothGrowth$supp=="VC"])
+
+t.test(x=ToothGrowth$len[ToothGrowth$dose==2 & ToothGrowth$supp=="OJ"],
+       y=ToothGrowth$len[ToothGrowth$dose==2 & ToothGrowth$supp=="VC"])
+
+```
+  
+##Conclusion
+
+We can see from these that the when:
+
+1. Dose == 0.5, we reject the NULL hypthesis as the p-value is very small, being less than 0.7%. This tells us that supplement OJ is a greater effect on tooth growth that is statistically significant with a growth difference of 1.7 to 8.7 greater than supplement VC with 95% confidence.
+
+2. Dose == 1.0, again we reject the NULL hypthesis as the p-value is very small, being less than 0.1%. This tells us that supplement OJ is a greater effect on tooth growth that is statistically significant with a growth difference of at least 2.8 greater than supplement VC with 95% confidence.
+
+3. Dose == 2.0, here we reject the ALTERNATIVE hypthesis as the p-value is very high, being almost 1. This tells us that there is no statistical difference between the two supplements at this dosage.
